@@ -1,0 +1,39 @@
+{
+  "name": "kissanconnect-backend",
+  "version": "1.0.0",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/birari2003/KissanConnect-Backend.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/birari2003/KissanConnect-Backend/issues"
+  },
+  "homepage": "https://github.com/birari2003/KissanConnect-Backend#readme",
+  "description": "",
+  "dependencies": {
+    "axios": "^1.13.2",
+    "bcrypt": "^6.0.0",
+    "cheerio": "^1.1.2",
+    "crypto": "^1.0.1",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "mysql2": "^3.15.3",
+    "node-fetch": "^3.3.2",
+    "nodemailer": "^7.0.10",
+    "nodemon": "^3.1.11",
+    "qrcode-terminal": "^0.12.0",
+    "razorpay": "^2.9.6",
+    "sequelize": "^6.37.7",
+    "sequelize-cli": "^6.6.3",
+    "sib-api-v3-sdk": "^8.5.0",
+    "whatsapp-web.js": "^1.34.2"
+  }
+}
