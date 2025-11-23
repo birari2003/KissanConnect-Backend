@@ -6,10 +6,10 @@
 # Node artifact files
 node_modules/
 dist/
-config/
+# config/
 .env
 .env.test
-config/
+# config/
 assets/
 # Compiled Java class files
 *.class
