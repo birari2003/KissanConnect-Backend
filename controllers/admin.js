@@ -11,7 +11,7 @@ const getFarmersList = async (req, res) => {
         if (district_id) whereClause.district_id = district_id;
         if (taluka_id) whereClause.taluka_id = taluka_id;
         if (village_id) whereClause.village_id = village_id;
-
+// asasch
         const farmers = await FarmerProfile.findAll({
             where: whereClause,
             include: [
