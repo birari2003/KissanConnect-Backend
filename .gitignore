@@ -9,6 +9,7 @@ dist/
 # config/
 .env
 .env.test
+uploads/
 # config/
 assets/
 # Compiled Java class files

@@ -9,54 +9,54 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'user_id',
         as: 'user'
       });
-      
+
       // FarmerProfile belongs to State
       FarmerProfile.belongsTo(models.State, {
         foreignKey: 'state_id',
         as: 'state'
       });
-      
+
       // FarmerProfile belongs to District
       FarmerProfile.belongsTo(models.District, {
         foreignKey: 'district_id',
         as: 'district'
       });
-      
+
       // FarmerProfile belongs to Taluka
       FarmerProfile.belongsTo(models.Taluka, {
         foreignKey: 'taluka_id',
         as: 'taluka'
       });
-      
+
       // FarmerProfile belongs to Village
       FarmerProfile.belongsTo(models.Village, {
         foreignKey: 'village_id',
         as: 'village'
       });
-      
+
       // FarmerProfile belongs to User (admin who approved)
       FarmerProfile.belongsTo(models.User, {
         foreignKey: 'approved_by',
         as: 'approver'
       });
     }
-    
+
     // Instance method to check if approved
     isApproved() {
       return this.request_status === 'approved';
     }
-    
+
     // Instance method to check if rejected
     isRejected() {
       return this.request_status === 'rejected';
     }
-    
+
     // Instance method to check if pending
     isPending() {
       return this.request_status === 'pending';
     }
   }
-  
+
   FarmerProfile.init({
     id: {
       type: DataTypes.INTEGER,
@@ -189,6 +189,20 @@ module.exports = (sequelize, DataTypes) => {
     rejection_reason: {
       type: DataTypes.TEXT,
       allowNull: true
+    },
+    email_sent: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false
+    },
+    email_sent_at: {
+      type: DataTypes.DATE,
+      allowNull: true
+    },
+    email_sent_count: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0
     }
   }, {
     sequelize,
@@ -197,6 +211,6 @@ module.exports = (sequelize, DataTypes) => {
     underscored: true,
     timestamps: true
   });
-  
+
   return FarmerProfile;
 };

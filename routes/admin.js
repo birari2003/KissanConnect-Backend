@@ -23,4 +23,30 @@ router.get('/states', isAuth, adminController.getStates);
 router.get('/states/:stateId/districts', isAuth, adminController.getDistrictsByState);
 router.get('/districts/:districtId/talukas', isAuth, adminController.getTalukasByDistrict);
 
+const multer = require('multer');
+const path = require('path');
+
+// Configure multer storage
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, 'uploads/');
+    },
+    filename: (req, file, cb) => {
+        cb(null, Date.now() + path.extname(file.originalname));
+    }
+});
+
+const upload = multer({ storage: storage });
+
+// Scheme management routes
+router.post('/create-scheme', isAuth, upload.single('attachment'), adminController.createScheme);
+
+// Job Profile management routes
+router.post('/create-job', isAuth, upload.single('attachment'), adminController.createJob);
+router.put('/update-job/:jobId', isAuth, upload.single('attachment'), adminController.updateJob);
+router.delete('/delete-job/:jobId', isAuth, adminController.deleteJob);
+router.get('/get-all-jobs', isAuth, adminController.getAllJobsAdmin);
+router.get('/my-jobs', isAuth, adminController.getMyJobs);
+router.patch('/update-job-status/:jobId', isAuth, adminController.updateJobStatus);
+
 module.exports = router;

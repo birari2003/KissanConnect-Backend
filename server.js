@@ -12,8 +12,9 @@ const app = express();
 const PORT = 5000;
 
 // Middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+app.use('/uploads', express.static('uploads'));
 
 // Test DB connection
 db.sequelize.authenticate()
