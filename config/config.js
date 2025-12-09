@@ -8,7 +8,9 @@ const config = {
   host: process.env.DB_HOST,
   port: process.env.DB_PORT,
   dialect: process.env.DB_DIALECT,
-  dialectOptions: {}
+  dialectOptions: {
+    charset: 'utf8mb4'
+  }
 };
 
 if (process.env.DB_SSL_CA) {

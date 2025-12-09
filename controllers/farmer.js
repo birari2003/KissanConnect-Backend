@@ -122,13 +122,15 @@ const loginUser = async (req, res) => {
             userResponse.farmer_status = null;
             userResponse.rejection_reason = null;
         }
-
+        console.log("userResponse", userResponse);
         return res.status(200).json({
             success: true,
             message: 'Login successful.',
+
             token,
             data: userResponse,
         });
+
     } catch (error) {
         console.error('Error logging in:', error);
         return res.status(500).json({
@@ -435,7 +437,6 @@ const sendEmail = async (req, res) => {
                     html: getContactEmailTemplate(email, subject, message),
                     text: getContactEmailPlainText(email, subject, message),
                 };
-
                 const info = await transporter.sendMail(mailOptions);
 
                 emailResults.push({
@@ -489,6 +490,7 @@ const sendEmail = async (req, res) => {
         });
     }
 };
+
 
 const getJobs = async (req, res) => {
     try {
