@@ -163,6 +163,27 @@ const registerFarmer = async (req, res) => {
             passport_photo_name // Extract optional filename
         } = req.body;
 
+        // Map gender values from Marathi/Hindi to English
+        const genderMap = {
+            // English
+            'male': 'male',
+            'female': 'female',
+            'other': 'other',
+            // Marathi
+            'पुरुष': 'male',
+            'स्त्री': 'female',
+            'इतर': 'other',
+            // Hindi
+            'पुरुष': 'male',
+            'महिला': 'female',
+            'अन्य': 'other'
+        };
+
+        // Normalize gender value
+        if (gender) {
+            gender = genderMap[gender.toLowerCase()] || genderMap[gender] || gender;
+        }
+
         // Sanitize log
         const bodyLog = { ...req.body };
         if (bodyLog.passport_photo) bodyLog.passport_photo = 'Base64 String (Truncated)';
@@ -770,6 +791,283 @@ const getGovernmentSchemes = async (req, res) => {
     }
 };
 
+const addFarmerHistory = async (req, res) => {
+    try {
+        const viewerUserId = req.user.id; // Logged-in user from auth middleware
+        const {
+            crop_sell_id,
+            crop_owner_user_id,
+            crop_name,
+            crop_image_path
+        } = req.body;
+
+        // Validate required fields
+        if (!crop_sell_id || !crop_owner_user_id) {
+            return res.status(400).json({
+                success: false,
+                message: 'Crop sell ID and crop owner user ID are required.'
+            });
+        }
+
+        // Fetch viewer (logged-in farmer) details
+        const viewer = await User.findByPk(viewerUserId, {
+            attributes: ['id', 'name', 'phone']
+        });
+
+        if (!viewer) {
+            return res.status(404).json({
+                success: false,
+                message: 'Viewer user not found.'
+            });
+        }
+
+        // Fetch crop owner details
+        const cropOwner = await User.findByPk(crop_owner_user_id, {
+            attributes: ['id', 'name', 'phone']
+        });
+
+        if (!cropOwner) {
+            return res.status(404).json({
+                success: false,
+                message: 'Crop owner user not found.'
+            });
+        }
+
+        // Fetch crop details if not provided
+        let finalCropName = crop_name;
+        let finalCropImagePath = crop_image_path;
+
+        // If crop_image_path is provided as a URL, extract just the filename
+        if (finalCropImagePath && (finalCropImagePath.includes('/') || finalCropImagePath.includes('\\'))) {
+            // Extract filename from path or URL
+            finalCropImagePath = finalCropImagePath.split('/').pop().split('\\').pop();
+        }
+
+        if (!finalCropName || !finalCropImagePath) {
+            const cropSell = await CropSell.findByPk(crop_sell_id, {
+                include: [{
+                    model: Media,
+                    as: 'photos',
+                    attributes: ['file_path'],
+                    limit: 1
+                }]
+            });
+
+            if (cropSell) {
+                finalCropName = finalCropName || cropSell.crop_name;
+                if (!finalCropImagePath && cropSell.photos && cropSell.photos.length > 0) {
+                    // file_path should already be just the filename
+                    finalCropImagePath = cropSell.photos[0].file_path;
+                }
+            }
+        }
+
+        // Import FarmerHistory model
+        const { FarmerHistory } = require('../models');
+
+        // Create history record
+        const history = await FarmerHistory.create({
+            viewer_user_id: viewer.id,
+            viewer_name: viewer.name,
+            viewer_contact: viewer.phone,
+            crop_owner_user_id: cropOwner.id,
+            crop_owner_name: cropOwner.name,
+            crop_owner_contact: cropOwner.phone,
+            crop_sell_id: crop_sell_id,
+            crop_name: finalCropName,
+            crop_image_path: finalCropImagePath,
+            viewed_at: new Date()
+        });
+
+        return res.status(201).json({
+            success: true,
+            message: 'Farmer history recorded successfully.',
+            data: history
+        });
+
+    } catch (error) {
+        console.error('Error adding farmer history:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Internal server error.',
+            error: error.message
+        });
+    }
+};
+
+const addComplaint = async (req, res) => {
+    try {
+        const complainantUserId = req.user.id; // Logged-in user from auth middleware
+        const {
+            against_user_id,
+            complaint_text
+        } = req.body;
+
+        // Validate required fields
+        if (!against_user_id || !complaint_text) {
+            return res.status(400).json({
+                success: false,
+                message: 'Against user ID and complaint text are required.'
+            });
+        }
+
+        // Validate complaint text length
+        if (complaint_text.trim().length < 10) {
+            return res.status(400).json({
+                success: false,
+                message: 'Complaint text must be at least 10 characters long.'
+            });
+        }
+
+        // Prevent self-complaints
+        if (complainantUserId === parseInt(against_user_id)) {
+            return res.status(400).json({
+                success: false,
+                message: 'You cannot file a complaint against yourself.'
+            });
+        }
+
+        // Fetch complainant (logged-in farmer) details
+        const complainant = await User.findByPk(complainantUserId, {
+            attributes: ['id', 'name', 'phone']
+        });
+
+        if (!complainant) {
+            return res.status(404).json({
+                success: false,
+                message: 'Complainant user not found.'
+            });
+        }
+
+        // Fetch accused farmer details
+        const accused = await User.findByPk(against_user_id, {
+            attributes: ['id', 'name', 'phone']
+        });
+
+        if (!accused) {
+            return res.status(404).json({
+                success: false,
+                message: 'Accused user not found.'
+            });
+        }
+
+        // Import Complaint model
+        const { Complaint } = require('../models');
+
+        // Create complaint record
+        const complaint = await Complaint.create({
+            complainant_user_id: complainant.id,
+            complainant_name: complainant.name,
+            complainant_contact: complainant.phone,
+            against_user_id: accused.id,
+            against_name: accused.name,
+            against_contact: accused.phone,
+            complaint_text: complaint_text.trim(),
+            status: 'pending'
+        });
+
+        return res.status(201).json({
+            success: true,
+            message: 'Complaint filed successfully.',
+            data: complaint
+        });
+
+    } catch (error) {
+        console.error('Error adding complaint:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Internal server error.',
+            error: error.message
+        });
+    }
+};
+
+const getFarmerHistory = async (req, res) => {
+    try {
+        const { FarmerHistory } = require('../models');
+
+        // Fetch all history records with associations
+        const history = await FarmerHistory.findAll({
+            include: [
+                {
+                    model: User,
+                    as: 'viewer',
+                    attributes: ['id', 'name', 'phone', 'email']
+                },
+                {
+                    model: User,
+                    as: 'cropOwner',
+                    attributes: ['id', 'name', 'phone', 'email']
+                },
+                {
+                    model: CropSell,
+                    as: 'crop',
+                    attributes: ['id', 'crop_name', 'quantity', 'unit', 'price_per_unit'],
+                    include: [{
+                        model: Media,
+                        as: 'photos',
+                        attributes: ['id', 'file_path', 'media_type']
+                    }]
+                }
+            ],
+            order: [['viewed_at', 'DESC']]
+        });
+
+        return res.status(200).json({
+            success: true,
+            data: history
+        });
+    } catch (error) {
+        console.error('Error fetching farmer history:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Internal server error.',
+            error: error.message
+        });
+    }
+};
+
+const getComplaints = async (req, res) => {
+    try {
+        const { Complaint } = require('../models');
+
+        // Fetch all complaints with associations
+        const complaints = await Complaint.findAll({
+            include: [
+                {
+                    model: User,
+                    as: 'complainant',
+                    attributes: ['id', 'name', 'phone', 'email']
+                },
+                {
+                    model: User,
+                    as: 'accused',
+                    attributes: ['id', 'name', 'phone', 'email']
+                },
+                {
+                    model: User,
+                    as: 'resolver',
+                    attributes: ['id', 'name', 'email'],
+                    required: false // Left join since resolver can be null
+                }
+            ],
+            order: [['created_at', 'DESC']]
+        });
+
+        return res.status(200).json({
+            success: true,
+            data: complaints
+        });
+    } catch (error) {
+        console.error('Error fetching complaints:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Internal server error.',
+            error: error.message
+        });
+    }
+};
+
 const getFarmerProfile = async (req, res) => {
     try {
         const userId = req.user.id;
@@ -832,5 +1130,9 @@ module.exports = {
     addCropClaim,
     getClaims,
     getAllCrops,
-    getGovernmentSchemes
+    getGovernmentSchemes,
+    addFarmerHistory,
+    getFarmerHistory,
+    addComplaint,
+    getComplaints
 };

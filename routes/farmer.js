@@ -44,4 +44,12 @@ router.get('/get-claims', isAuth, farmerController.getClaims);
 // Government Scheme routes
 router.get('/get-schemes', isAuth, farmerController.getGovernmentSchemes);
 
+// Farmer History routes
+router.post('/add-history', isAuth, farmerController.addFarmerHistory);
+router.get('/get-history', isAuth, farmerController.getFarmerHistory);
+
+// Complaint routes
+router.post('/add-complaint', isAuth, farmerController.addComplaint);
+router.get('/get-complaints', isAuth, farmerController.getComplaints);
+
 module.exports = router;

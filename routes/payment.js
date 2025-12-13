@@ -5,5 +5,6 @@ const isAuth = require('../middleware/is-auth');
 
 router.post('/create-order', isAuth, paymentController.createOrder);
 router.post('/verify-payment', isAuth, paymentController.verifyPayment);
+router.get('/payment-details', isAuth, paymentController.getPaymentDetails);
 
 module.exports = router;

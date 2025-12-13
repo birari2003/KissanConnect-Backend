@@ -1,6 +1,6 @@
 const Razorpay = require('razorpay');
 const crypto = require('crypto');
-const { Subscription } = require('../models');
+const { Subscription, Sequelize } = require('../models');
 
 // Initialize Razorpay
 const razorpay = new Razorpay({
@@ -24,7 +24,7 @@ const createOrder = async (req, res) => {
         const options = {
             amount: amount * 100, // Amount in paise
             currency: currency,
-            receipt: `receipt_order_${Date.now()}`,
+            receipt: `receipt_order_${Date.now()} `,
             notes: {
                 user_id: userId
             }
@@ -126,7 +126,57 @@ const verifyPayment = async (req, res) => {
     }
 };
 
+const getPaymentDetails = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const currentDate = new Date();
+
+        // Find ANY active subscription that hasn't expired
+        const subscription = await Subscription.findOne({
+            where: {
+                user_id: userId,
+                status: 'active',
+                end_date: {
+                    [Sequelize.Op.gt]: currentDate
+                }
+            },
+            order: [['end_date', 'DESC']] // Get the one that expires last if multiple exist
+        });
+
+        if (subscription) {
+            return res.status(200).json({
+                success: true,
+                isSubscribed: true,
+                subscription: {
+                    id: subscription.id,
+                    status: subscription.status,
+                    startDate: subscription.start_date,
+                    endDate: subscription.end_date,
+                    amount: subscription.amount,
+                    currency: subscription.currency,
+                    razorpayPaymentId: subscription.razorpay_payment_id
+                }
+            });
+        } else {
+            return res.status(200).json({
+                success: true,
+                isSubscribed: false,
+                message: 'No active subscription found'
+            });
+        }
+
+    } catch (error) {
+        console.error('Error fetching payment details:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Internal server error',
+            error: error.message
+        });
+    }
+};
+
 module.exports = {
     createOrder,
-    verifyPayment
+    verifyPayment,
+    getPaymentDetails
 };
