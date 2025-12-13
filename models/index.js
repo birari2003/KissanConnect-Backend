@@ -13,6 +13,7 @@ const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, proces
   port: process.env.DB_PORT,
   dialect: "mysql",
   dialectOptions: {
+    charset: 'utf8mb4',
     ssl: {
       require: true,
       rejectUnauthorized: false,
@@ -23,9 +24,6 @@ const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, proces
   define: {
     charset: 'utf8mb4',
     collate: 'utf8mb4_unicode_ci'
-  },
-  dialectOptions: {
-    charset: 'utf8mb4'
   }
 });
 
